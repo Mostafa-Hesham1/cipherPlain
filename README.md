@@ -24,11 +24,13 @@ To run this project locally, follow these steps:
         npm install
 3. **Set Environment Variable (for OpenSSL issues)**
    --**On Windows**
-        ```bash
-         set N ODE_OPTIONS=--openssl-legacy-provider
-   --**On Windows**
+      ```bash
+        set N ODE_OPTIONS=--openssl-legacy-provider
+**On Windows**
    ```bash
-    export NODE_OPTIONS=--openssl-legacy-provider
+ export NODE_OPTIONS=--openssl-legacy-provider
+```
+
 4.**Run the development server**
   ```bash
        npm start
