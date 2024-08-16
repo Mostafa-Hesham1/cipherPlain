@@ -7,28 +7,56 @@ function CipherForm() {
     const [text, setText] = useState('');
     const [result, setResult] = useState('');
     const [mode, setMode] = useState('encrypt');
-    const bitSize = 128; 
+    const bitSize = 128;
+
+    const isHexString = (str) => {
+        const hexRegEx = /^[0-9a-fA-F]+$/;
+        return hexRegEx.test(str.replace(/\s+/g, '')); // Ignore spaces when testing for valid hex string
+    };
+
+    const stringToHex = (str) => {
+        return str
+            .split('')
+            .map(c => c === ' ' ? '20' : c.charCodeAt(0).toString(16).padStart(2, '0')) // Convert spaces to '20'
+            .join('');
+    };
+
+    function hexToString(hex) {
+        let str = '';
+        for (let i = 0; i < hex.length; i += 2) {
+            const code = parseInt(hex.substr(i, 2), 16);
+            str += String.fromCharCode(code);
+        }
+        return str;
+    }
 
     const handleCipher = () => {
         if (!key || !text) {
             alert('Both key and text fields must be filled.');
             return;
         }
-
-        if (key.length !== bitSize / 4) {
-            alert(`Key must be ${bitSize / 4} hex characters long for a ${bitSize}-bit key.`);
-            return;
+    
+        let inputText = text.trim();
+        // Convert text to hex if it's not already in hex format
+        if (!isHexString(inputText)) {
+            inputText = stringToHex(inputText);
         }
-
+    
+        let inputKey = key.trim();
+        // Convert key to hex if it's not already in hex format
+        if (!isHexString(inputKey)) {
+            inputKey = stringToHex(inputKey);
+        }
+    
         let output;
-        console.log(mode);
         if (mode === 'encrypt') {
-            output = aesEncrypt(text, key);
+            output = aesEncrypt(inputText, inputKey);
         } else {
-            output = aesDecrypt(text, key);
+            output = aesDecrypt(inputText, inputKey);
         }
-        setResult(output);
+        setResult(hexToString(output));
     };
+    
 
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
@@ -63,7 +91,7 @@ function CipherForm() {
             <Box sx={{ maxWidth: 1000, margin: 'auto', padding: 4 }}>
                 <Paper elevation={4} sx={{ padding: 3, backgroundColor: '#f5f5f5' }}>
                     <Typography variant="h3" align="center" gutterBottom>
-                    54776f204f6e65204e696e652054776f
+                        AES Cipher Tool
                     </Typography>
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={6}>
@@ -77,7 +105,7 @@ function CipherForm() {
                                 helperText={`Enter a ${bitSize}-bit hexadecimal key.`}
                             />
                             <TextField
-                                label="Text to Encrypt/Decrypt (hex)"
+                                label="Text to Encrypt/Decrypt (hex or string)"
                                 fullWidth
                                 multiline
                                 rows={4}
@@ -85,7 +113,7 @@ function CipherForm() {
                                 value={text}
                                 onChange={(e) => setText(e.target.value)}
                                 margin="normal"
-                                helperText="Enter the text in hexadecimal format."
+                                helperText="Enter the text in hexadecimal format or as a plain string."
                             />
                             <FormControl component="fieldset" sx={{ margin: '20px 0' }}>
                                 <RadioGroup row value={mode} onChange={(e) => setMode(e.target.value)}>
