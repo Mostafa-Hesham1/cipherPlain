@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<<<<<<< HEAD
 <module type="WEB_MODULE" version="4">
   <component name="Go" enabled="true" />
+=======
+<module type="CPP_MODULE" version="4">
+>>>>>>> c0aad55bbef1bb492e167da28b69164a759caee8
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
