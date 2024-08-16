@@ -38,50 +38,29 @@ class AES {
             0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
         ];
 
-        this.rCon = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36]; // Round constants
-        this.blockSize = 16;
+        this.rCon = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36];
         this.key = key;
         this.roundKeys = this.keyExpansion(key);
     }
 
-    // PKCS#7 padding method
-    pad(plaintext) {
-        const paddingLength = this.blockSize - (plaintext.length % this.blockSize);
-        const padding = new Array(paddingLength).fill(paddingLength);
-        return plaintext.concat(padding);
-    }
-
-    // Method to remove PKCS#7 padding after decryption
-    unpad(plaintext) {
-        const paddingLength = plaintext[plaintext.length - 1];
-        return plaintext.slice(0, -paddingLength);
-    }
-
-    // SubBytes transformation
-    subBytes(state) {
+    subBytes(state, sBox) {
         for (let i = 0; i < 4; i++) {
             for (let j = 0; j < 4; j++) {
-                state[i][j] = this.sBox[state[i][j]];
+                state[i][j] = sBox[state[i][j]];
             }
         }
     }
 
-    // Inverse SubBytes transformation
-    invSubBytes(state) {
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 4; j++) {
-                state[i][j] = this.invSBox[state[i][j]];
-            }
-        }
-    }
-
-    // ShiftRows transformation
     shiftRows(state) {
         state[1] = this.rotateLeft(state[1], 1);
         state[2] = this.rotateLeft(state[2], 2);
         state[3] = this.rotateLeft(state[3], 3);
     }
-    // ShiftRows transformation
+
+    rotateLeft(row, n) {
+        return row.slice(n).concat(row.slice(0, n));
+    }
+
     invShiftRows(state) {
         state[1] = this.rotateRight(state[1], 1);
         state[2] = this.rotateRight(state[2], 2);
@@ -92,7 +71,6 @@ class AES {
         return row.slice(-n).concat(row.slice(0, -n));
     }
 
-    // MixColumns transformation
     mixColumns(state) {
         for (let i = 0; i < 4; i++) {
             let a = state[0][i];
@@ -107,7 +85,6 @@ class AES {
         }
     }
 
-    // Inverse MixColumns transformation
     invMixColumns(state) {
         for (let i = 0; i < 4; i++) {
             let a = state[0][i];
@@ -122,7 +99,6 @@ class AES {
         }
     }
 
-    // Galois Field multiplication
     gmul(a, b) {
         let p = 0;
         for (let counter = 0; counter < 8; counter++) {
@@ -132,10 +108,9 @@ class AES {
             if (hi_bit_set) a ^= 0x1b;
             b >>= 1;
         }
-        return p & 0xFF;  // Ensure the result is always a byte (0-255)
+        return p & 0xFF;  // ensuring that result is between 0 and 255
     }
 
-    // AddRoundKey transformation
     addRoundKey(state, roundKey) {
         for (let i = 0; i < 4; i++) {
             for (let j = 0; j < 4; j++) {
@@ -148,7 +123,7 @@ class AES {
         const keyWords = [];
         const expandedKeys = [];
 
-        // Initial round key (Round 0)
+        // extracting the first 4 words
         for (let i = 0; i < 4; i++) {
             keyWords[i] = key.slice(4 * i, 4 * i + 4);
         }
@@ -173,10 +148,10 @@ class AES {
     }
 
     keyExpansionCore(word, iteration) {
-        // Rotate the word eight bits to the left
+        // Rot nibble
         word.push(word.shift());
 
-        // Apply S-box to all four bytes of the word
+        // Sub nibble
         for (let i = 0; i < 4; i++) {
             word[i] = this.sBox[word[i]];
         }
@@ -191,7 +166,6 @@ class AES {
         return word1.map((byte, index) => byte ^ word2[index]);
     }
 
-    // Encrypt function (already provided)
     encrypt(plaintext) {
 
         let state = this.createStateMatrix(plaintext);
@@ -200,14 +174,14 @@ class AES {
         this.addRoundKey(state, this.roundKeys.slice(0, 16));
         
         for (let round = 1; round < 10; round++) {
-            this.subBytes(state);
+            this.subBytes(state, this.sBox);
             this.shiftRows(state);
             this.mixColumns(state);
             this.addRoundKey(state, this.roundKeys.slice(round * 16, (round + 1) * 16));
             console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
         }
         
-        this.subBytes(state);
+        this.subBytes(state, this.sBox);
         this.shiftRows(state);
         this.addRoundKey(state, this.roundKeys.slice(160));
 
@@ -215,7 +189,7 @@ class AES {
     }
 
     stateToCipherText(state) {
-        // Convert the state matrix to a flat array in the correct column-major order
+        // Convert the state matrix to column-wise order
         const cipherText = [];
         for (let col = 0; col < 4; col++) {
             for (let row = 0; row < 4; row++) {
@@ -236,43 +210,27 @@ class AES {
         return state;
     }
 
-    // Decrypt function with inverse operations
     decrypt(ciphertext) {
-        if (!ciphertext || ciphertext.length === 0) {
-            console.error('Ciphertext is empty or undefined.');
-            return undefined;
-        }
-        
         let state = this.cipherTextToState(ciphertext);
         console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
         
         
-        this.addRoundKey(state, this.roundKeys.slice(160));  // Final round key
+        this.addRoundKey(state, this.roundKeys.slice(160));  
         
         for (let round = 9; round > 0; round--) {
-            console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
             this.invShiftRows(state);
-            console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
-            this.invSubBytes(state);
-            console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
+            this.subBytes(state, this.invSBox);
             this.addRoundKey(state, this.roundKeys.slice(round * 16, (round + 1) * 16));
-            console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
             this.invMixColumns(state);
-            console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
         }
         
         this.invShiftRows(state);
-        console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
-        this.invSubBytes(state);
-        console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
+        this.subBytes(state, this.invSBox);
         this.addRoundKey(state, this.roundKeys.slice(0, 16));  
-        console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
     
         return this.stateToCipherText(state);
     }
     
-    
-
     // Helper functions for matrix manipulation (already provided)
     createStateMatrix(input) {
         let state = [];
@@ -283,10 +241,6 @@ class AES {
             }
         }
         return state;
-    }
-
-    rotateLeft(row, n) {
-        return row.slice(n).concat(row.slice(0, n));
     }
 }
 

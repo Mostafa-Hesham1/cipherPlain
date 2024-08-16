@@ -58,11 +58,6 @@ function CipherForm() {
         }
     };
 
-    const generateKey = () => {
-        const keyBytes = crypto.getRandomValues(new Uint8Array(bitSize / 8));
-        setKey(byteArrayToHexString(keyBytes));
-    };
-
     return (
         <Grow in={true} timeout={1000}>
             <Box sx={{ maxWidth: 1000, margin: 'auto', padding: 4 }}>
@@ -101,9 +96,6 @@ function CipherForm() {
                             <Button variant="contained" component="label" fullWidth sx={{ marginBottom: '20px' }}>
                                 Upload Text File
                                 <input type="file" accept=".txt" hidden onChange={handleFileUpload} />
-                            </Button>
-                            <Button variant="contained" color="primary" onClick={generateKey} fullWidth sx={{ marginBottom: '20px' }}>
-                                Generate Random Key
                             </Button>
                             <Button variant="contained" color="secondary" onClick={handleCipher} fullWidth sx={{ padding: '10px 0', fontSize: '16px' }}>
                                 {mode === 'encrypt' ? 'Encrypt' : 'Decrypt'}
