@@ -3,14 +3,14 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import NavBar from './components/NavBar';  // Adjust import path if necessary
 import CipherForm from './components/CipherForm';  // Playfair Cipher component
-import AESPage from './pages/AESPage';  // AES component
+import AESPage from './components/CipherFormAES';  // AES component
 import ElGamalPage from './pages/ElGamalPage';  // ElGamal component
 import RC4Page from './pages/RC4Page';  // RC4 component
 import Footer from './components/Footer';
 
 // Import your algorithm modules
 import * as playfair from './algorithms/playfair';
-import * as aes from './algorithms/aes';
+import * as aes from './algorithms/AES/aes';
 import * as rc4 from './algorithms/rc4';
 import * as elgamal from './algorithms/elgamal';
 
