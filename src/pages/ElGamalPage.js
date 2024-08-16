@@ -1,11 +1,11 @@
 // src/pages/ElGamalPage.js
 import React from 'react';
+import ElGamal from '../components/ElGamal_Form';
 
 function ElGamalPage() {
     return (
         <div>
-            <h2>ElGamal Algorithm Page</h2>
-            {/* Add ElGamal content here */}
+           <ElGamal />
         </div>
     );
 }
