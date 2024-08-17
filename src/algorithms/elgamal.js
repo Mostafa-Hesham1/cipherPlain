@@ -1,48 +1,40 @@
-function modpow(base, power, mod) {
+function modpow(base, pow, mod) {
     let result = 1;
     base %= mod;
-    while (power > 0) {
-        if (power % 2 === 1) {
+    while (pow> 0) {
+        if (pow % 2 === 1) {
             result = (result * base) % mod;
         }
-        power = Math.floor(power / 2);
+        pow = Math.floor(pow / 2);
         base = (base * base) % mod;
     }
     return result;
 }
 
 function modInverse(a, m) {
-    // Ensure a is positive and within the range [0, m-1]
-    a %= m;
-    if (a < 0) 
-        a += m;
 
-    const m0 = m;
-    let x0 = 0, x1 = 1;
+    let A = Math.max(m,a);
+    let B = Math.min(m,a);
+    let q = Math.floor(A / B);
+    let R = A % B;
+    let T1= 0;
+    let T2 = 1;
+    let T = T1 - ( T2 * q);
 
-    if (m === 1) {
-        return 0; 
+    while (R !== 0){
+        A = B;
+        B = R;
+        q = Math.floor(A / B);
+        R = A % B;
+        T1 = T2;
+        T2 = T;
+        T = T1 - ( T2 * q);
     }
 
-    while (a > 1) {
-        let q = Math.floor(a / m);
-
-        // Update m and a
-        let temp = m;
-        m = a % m;
-        a = temp;
-
-        // Update x0 and x1
-        temp = x0;
-        x0 = x1 - q * x0;
-        x1 = temp;
-    }
-
-    if (x1 < 0) {
-        x1 += m0;
-    }
-
-    return x1;
+    if (T2 < 0)
+        return ((T2 / m)+1) * m  ;
+    else
+        return T2;
 }
 
 

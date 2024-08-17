@@ -79,14 +79,14 @@ function ElGamalForm() {
         return Array.from(factors);
     }
 
-    const modPow = (base, power, mod) => {
+    const modPow = (base, pow, mod) => {
         let result = 1;
         base %=  mod;
-        while (power > 0) {
-            if (power % 2 === 1) {
+        while (pow > 0) {
+            if (pow % 2 === 1) {
                 result = (result * base) % mod;
             }
-            power = Math.floor(power / 2);
+            pow = Math.floor(pow / 2);
             base = (base * base) % mod;
         }
         return result;
