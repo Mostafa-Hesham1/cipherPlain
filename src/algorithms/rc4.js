@@ -1,4 +1,4 @@
-function rc4KeySchedule(key) {
+function GenStateV(key) {
     let S = [];
     let T = [];
 
@@ -16,7 +16,7 @@ function rc4KeySchedule(key) {
     return S;
 }
 
-function rc4GenerateKeystream(S, textLength) {
+function Encryption(S, textLength) {
     let i = 0, j = 0;
     let keystream = [];
 
@@ -34,8 +34,8 @@ function rc4GenerateKeystream(S, textLength) {
 }
 
 export function rc4Encrypt(plaintext, key) {
-    const S = rc4KeySchedule(key);
-    const keystream = rc4GenerateKeystream(S, plaintext.length);
+    const S = GenStateV(key);
+    const keystream = Encryption(S, plaintext.length);
     let ciphertext = '';
 
     for (let i = 0; i < plaintext.length; i++) {
