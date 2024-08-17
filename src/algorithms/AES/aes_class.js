@@ -66,7 +66,7 @@ class AES {
     }
 
     mixColumns(state) {
-        const mul2 = (x) => ((x << 1) & 0xFF) ^ ((x & 0x80) ? 0x1B : 0x00);
+        const mul2 = (x) => ((x << 1) & 0xFF);
         const mul3 = (x) => mul2(x) ^ x;
     
         let newState = [];
@@ -84,8 +84,7 @@ class AES {
     }
 
     invMixColumns(state) {
-        const mul2 = (x) => ((x << 1) & 0xFF) ^ ((x & 0x80) ? 0x1B : 0x00);
-        const mul3 = (x) => mul2(x) ^ x;
+        const mul2 = (x) => ((x << 1) & 0xFF);
         const mul9 = (x) => mul2(mul2(mul2(x))) ^ x;
         const mul11 = (x) => mul2(mul2(mul2(x)) ^ x) ^ x;
         const mul13 = (x) => mul2(mul2(mul2(x) ^ x)) ^ x;
@@ -210,7 +209,7 @@ class AES {
         console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
         
         // Reverse the encryption process
-        
+
         // Round 10
         this.addRoundKey(state, this.roundKeys.slice(160));  
         
