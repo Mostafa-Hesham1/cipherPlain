@@ -52,63 +52,57 @@ class AES {
     }
 
     shiftRows(state) {
-        state[1] = this.rotateLeft(state[1], 1);
-        state[2] = this.rotateLeft(state[2], 2);
-        state[3] = this.rotateLeft(state[3], 3);
+        for (let i = 1; i < 4; i++) {
+            // performing a circular left shift on each row by i positions
+            state[i] = state[i].slice(i).concat(state[i].slice(0, i));
+        }
     }
-
-    rotateLeft(row, n) {
-        return row.slice(n).concat(row.slice(0, n));
-    }
-
+    
     invShiftRows(state) {
-        state[1] = this.rotateRight(state[1], 1);
-        state[2] = this.rotateRight(state[2], 2);
-        state[3] = this.rotateRight(state[3], 3);
-    }
-
-    rotateRight(row, n) {
-        return row.slice(-n).concat(row.slice(0, -n));
+        for (let i = 1; i < 4; i++) {
+            // performing a circular right shift on each row by i positions
+            state[i] = state[i].slice(-i).concat(state[i].slice(0, -i));
+        }
     }
 
     mixColumns(state) {
-        for (let i = 0; i < 4; i++) {
-            let a = state[0][i];
-            let b = state[1][i];
-            let c = state[2][i];
-            let d = state[3][i];
-
-            state[0][i] = this.gmul(a, 2) ^ this.gmul(b, 3) ^ c ^ d;
-            state[1][i] = a ^ this.gmul(b, 2) ^ this.gmul(c, 3) ^ d;
-            state[2][i] = a ^ b ^ this.gmul(c, 2) ^ this.gmul(d, 3);
-            state[3][i] = this.gmul(a, 3) ^ b ^ c ^ this.gmul(d, 2);
+        const mul2 = (x) => ((x << 1) & 0xFF) ^ ((x & 0x80) ? 0x1B : 0x00);
+        const mul3 = (x) => mul2(x) ^ x;
+    
+        let newState = [];
+    
+        for (let c = 0; c < 4; c++) { // Process each column
+            newState[c] = [
+                mul2(state[0][c]) ^ mul3(state[1][c]) ^ state[2][c] ^ state[3][c],
+                state[0][c] ^ mul2(state[1][c]) ^ mul3(state[2][c]) ^ state[3][c],
+                state[0][c] ^ state[1][c] ^ mul2(state[2][c]) ^ mul3(state[3][c]),
+                mul3(state[0][c]) ^ state[1][c] ^ state[2][c] ^ mul2(state[3][c])
+            ];
         }
+    
+        return newState;
     }
 
     invMixColumns(state) {
-        for (let i = 0; i < 4; i++) {
-            let a = state[0][i];
-            let b = state[1][i];
-            let c = state[2][i];
-            let d = state[3][i];
-
-            state[0][i] = this.gmul(a, 0x0e) ^ this.gmul(b, 0x0b) ^ this.gmul(c, 0x0d) ^ this.gmul(d, 0x09);
-            state[1][i] = this.gmul(a, 0x09) ^ this.gmul(b, 0x0e) ^ this.gmul(c, 0x0b) ^ this.gmul(d, 0x0d);
-            state[2][i] = this.gmul(a, 0x0d) ^ this.gmul(b, 0x09) ^ this.gmul(c, 0x0e) ^ this.gmul(d, 0x0b);
-            state[3][i] = this.gmul(a, 0x0b) ^ this.gmul(b, 0x0d) ^ this.gmul(c, 0x09) ^ this.gmul(d, 0x0e);
+        const mul2 = (x) => ((x << 1) & 0xFF) ^ ((x & 0x80) ? 0x1B : 0x00);
+        const mul3 = (x) => mul2(x) ^ x;
+        const mul9 = (x) => mul2(mul2(mul2(x))) ^ x;
+        const mul11 = (x) => mul2(mul2(mul2(x)) ^ x) ^ x;
+        const mul13 = (x) => mul2(mul2(mul2(x) ^ x)) ^ x;
+        const mul14 = (x) => mul2(mul2(mul2(x) ^ x) ^ x);
+    
+        let newState = [];
+    
+        for (let c = 0; c < 4; c++) { // Process each column
+            newState[c] = [
+                mul14(state[0][c]) ^ mul11(state[1][c]) ^ mul13(state[2][c]) ^ mul9(state[3][c]),
+                mul9(state[0][c]) ^ mul14(state[1][c]) ^ mul11(state[2][c]) ^ mul13(state[3][c]),
+                mul13(state[0][c]) ^ mul9(state[1][c]) ^ mul14(state[2][c]) ^ mul11(state[3][c]),
+                mul11(state[0][c]) ^ mul13(state[1][c]) ^ mul9(state[2][c]) ^ mul14(state[3][c])
+            ];
         }
-    }
-
-    gmul(a, b) {
-        let p = 0;
-        for (let counter = 0; counter < 8; counter++) {
-            if (b & 1) p ^= a;
-            let hi_bit_set = a & 0x80;
-            a <<= 1;
-            if (hi_bit_set) a ^= 0x1b;
-            b >>= 1;
-        }
-        return p & 0xFF;  // ensuring that result is between 0 and 255
+    
+        return newState;
     }
 
     addRoundKey(state, roundKey) {
@@ -148,13 +142,14 @@ class AES {
     }
 
     keyExpansionCore(word, iteration) {
-        // Rot nibble
+        // Rot nibble, like pop_front and push_back
         word.push(word.shift());
 
         // Sub nibble
         for (let i = 0; i < 4; i++) {
             word[i] = this.sBox[word[i]];
         }
+        console.log(word[0].toString(16).padStart(2, '0'));
 
         // XOR the first byte with the round constant
         word[0] ^= this.rCon[iteration - 1];
@@ -214,9 +209,12 @@ class AES {
         let state = this.cipherTextToState(ciphertext);
         console.log(state.map(row => row.map(byte => byte.toString(16).padStart(2, '0')).join(' ')));
         
+        // Reverse the encryption process
         
+        // Round 10
         this.addRoundKey(state, this.roundKeys.slice(160));  
         
+        // Rounds 9 to 1
         for (let round = 9; round > 0; round--) {
             this.invShiftRows(state);
             this.subBytes(state, this.invSBox);
@@ -224,6 +222,7 @@ class AES {
             this.invMixColumns(state);
         }
         
+        // Round 0
         this.invShiftRows(state);
         this.subBytes(state, this.invSBox);
         this.addRoundKey(state, this.roundKeys.slice(0, 16));  
@@ -231,7 +230,6 @@ class AES {
         return this.stateToCipherText(state);
     }
     
-    // Helper functions for matrix manipulation (already provided)
     createStateMatrix(input) {
         let state = [];
         for (let i = 0; i < 4; i++) {
