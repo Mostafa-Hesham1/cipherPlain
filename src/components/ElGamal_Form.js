@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, Typography, Paper, Grid, Grow } from '@mui/material';
+import { TextField, Button, Box, Typography, Paper, Grid, Grow, Tooltip, IconButton } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import { elGamalEncrypt, elGamalDecrypt } from '../algorithms/elgamal.js';
 
 function ElGamalForm() {
@@ -141,6 +142,68 @@ function ElGamalForm() {
         return !!errors.r || !!errors.m || !bob.r || !bob.m;
     };
 
+    const handleAliceFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const fileContent = e.target.result;
+                const lines = fileContent.split(/\r?\n/);
+                let extractedAlice = { p: '', g: '', x: '' };
+
+                for (let line of lines) {
+                    line = line.trim();
+                    if (line.startsWith('p:')) extractedAlice.p = line.replace('p:', '').trim();
+                    else if (line.startsWith('g:')) extractedAlice.g = line.replace('g:', '').trim();
+                    else if (line.startsWith('x:')) extractedAlice.x = line.replace('x:', '').trim();
+                }
+
+                setAlice(extractedAlice);
+                
+                // Validate the new inputs
+                Object.keys(extractedAlice).forEach(key => validateField(key, extractedAlice[key]));
+            };
+            reader.readAsText(file);
+        }
+    };
+
+    const handleBobFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const fileContent = e.target.result;
+                const lines = fileContent.split(/\r?\n/);
+                let extractedBob = { r: '', m: '' };
+
+                for (let line of lines) {
+                    line = line.trim();
+                    if (line.startsWith('r:')) extractedBob.r = line.replace('r:', '').trim();
+                    else if (line.startsWith('m:')) extractedBob.m = line.replace('m:', '').trim();
+                }
+
+                setBob(extractedBob);
+                
+                // Validate the new inputs
+                Object.keys(extractedBob).forEach(key => validateField(key, extractedBob[key]));
+            };
+            reader.readAsText(file);
+        }
+    };
+
+    const fileFormatTooltip = (person) => {
+        const format = person === 'Alice' 
+            ? "File format:\np: [prime number]\ng: [generator]\nx: [private key]"
+            : "File format:\nr: [random number]\nm: [message]";
+        return (
+            <Tooltip title={<pre>{format}</pre>}>
+                <IconButton size="small">
+                    <InfoIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+        );
+    };
+
     return (
         <Grow in={true} timeout={1000}>
             <Box sx={{ maxWidth: 1200, margin: 'auto', padding: 4 }}>
@@ -152,6 +215,8 @@ function ElGamalForm() {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Paper elevation={3} sx={{ width: '30%', padding: 2 }}>
                             <Typography variant="h6">Alice's Machine</Typography>
+                           
+                         
                             <TextField 
                                 label="Enter a prime p" 
                                 fullWidth 
@@ -183,9 +248,22 @@ function ElGamalForm() {
                                 sx={{ mb: 2 }}
                             />
                             <Typography variant="body2" sx={{ mb: 2 }}>h is calculated as h = g^x mod p</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <Button 
+                                    variant="contained" 
+                                    component="label" 
+                                    fullWidth 
+                                    sx={{ marginRight: '10px' }}
+                                >
+                                    Upload Alice's File
+                                    <input type="file" accept=".txt" hidden onChange={handleAliceFileUpload} />
+                                </Button>
+                                {fileFormatTooltip('Alice')}
+                            </Box>
+                           
                             <Button 
                                 variant="contained" 
-                                color="primary" 
+                                color="secondary" 
                                 onClick={generateAndPublishPublicKey} 
                                 fullWidth 
                                 sx={{ mb: 2, padding: '10px 0', fontSize: '16px' }}
@@ -221,6 +299,8 @@ function ElGamalForm() {
 
                         <Paper elevation={3} sx={{ width: '30%', padding: 2 }}>
                             <Typography variant="h6">Bob's Machine</Typography>
+                           
+                           
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                 <TextField 
                                     label="Private Key for Encryption r" 
@@ -251,7 +331,21 @@ function ElGamalForm() {
                                 helperText={errors.m}
                                 sx={{ mb: 2 }}
                             />
+                         
                             <Typography variant="body2" sx={{ mb: 2 }}>Encrypted message is calculated as (c1, c2) = (g^r mod p, (h^r * m) mod p)</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <Button 
+                                    variant="contained" 
+                                    component="label" 
+                                    fullWidth 
+                                    sx={{ marginRight: '10px' }}
+                                >
+                                    Upload Bob's File
+                                    <input type="file" accept=".txt" hidden onChange={handleBobFileUpload} />
+                                </Button>
+                                {fileFormatTooltip('Bob')}
+                            </Box>
+                          
                             <Button 
                                 variant="contained" 
                                 color="secondary" 
@@ -262,6 +356,7 @@ function ElGamalForm() {
                             >
                                 Encrypt & Send
                             </Button>
+                            
                         </Paper>
                     </Box>
                 </Paper>
