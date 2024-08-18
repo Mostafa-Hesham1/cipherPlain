@@ -58,7 +58,7 @@ function CipherForm() {
         }
        
         if (flag) {
-            setText(hexToString(output));
+            setResult(hexToString(output));
         } else {
             setResult(output);
         }
