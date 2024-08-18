@@ -66,7 +66,7 @@ class AES {
     }
 
     mixColumns(state) {
-        const mul2 = (x) => ((x << 1) & 0xFF);
+        const mul2 = (x) => ((x << 1) & 0xFF) ^ (x & 0x80 ? 0x1B : 0);
         const mul3 = (x) => mul2(x) ^ x;
     
         let newState = [];
@@ -84,7 +84,7 @@ class AES {
     }
 
     invMixColumns(state) {
-        const mul2 = (x) => ((x << 1) & 0xFF);
+        const mul2 = (x) => ((x << 1) & 0xFF) ^ (x & 0x80 ? 0x1B : 0);
         const mul9 = (x) => mul2(mul2(mul2(x))) ^ x;
         const mul11 = (x) => mul2(mul2(mul2(x)) ^ x) ^ x;
         const mul13 = (x) => mul2(mul2(mul2(x) ^ x)) ^ x;
