@@ -32,7 +32,8 @@ function modInverse(a, m) {
     }
 
     if (T2 < 0)
-        return ((T2 / m)+1) * m  ;
+        // If T2 is negative, add m to it and return the result
+        return (T2 + m );
     else
         return T2;
 }
