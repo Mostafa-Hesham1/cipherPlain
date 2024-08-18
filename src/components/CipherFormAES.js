@@ -37,8 +37,10 @@ function CipherForm() {
         }
     
         let inputText = text.trim();
+        let flag = false;
         // Convert text to hex if it's not already in hex format
         if (!isHexString(inputText)) {
+            flag = true;
             inputText = stringToHex(inputText);
         }
     
@@ -54,7 +56,12 @@ function CipherForm() {
         } else {
             output = aesDecrypt(inputText, inputKey);
         }
-        setResult(hexToString(output));
+       
+        if (flag) {
+            setText(hexToString(output));
+        } else {
+            setResult(output);
+        }
     };
     
 
@@ -65,7 +72,7 @@ function CipherForm() {
             reader.onload = (e) => {
                 const fileContent = e.target.result;
 
-                const lines = fileContent.split(/\r?\n/); // Split by both \r\n and \n
+                const lines = fileContent.split(/\r?\n/); 
 
                 let extractedKey = '';
                 let extractedText = '';
