@@ -54,6 +54,10 @@ class AES {
     shiftRows(state) {
         for (let i = 1; i < 4; i++) {
             // performing a circular left shift on each row by i positions
+            // state[1] = [1, 2, 3, 4]
+            // state[1].slice(1) = [2, 3, 4]
+            // state[1].slice(0, 1) = [1]
+            // state[1] = [2, 3, 4, 1]
             state[i] = state[i].slice(i).concat(state[i].slice(0, i));
         }
     }
@@ -61,11 +65,17 @@ class AES {
     invShiftRows(state) {
         for (let i = 1; i < 4; i++) {
             // performing a circular right shift on each row by i positions
+            // state[1] = [1, 2, 3, 4]
+            // state[1].slice(-i) = [4]
+            // state[1].slice(0, -i) = [1, 2, 3]
+            // state[1] = [4, 1, 2, 3]
             state[i] = state[i].slice(-i).concat(state[i].slice(0, -i));
         }
     }
 
     mixColumns(state) {
+        // masking with 0xFF to ensure the result is a byte
+        // xoring with 0x1B if the most significant bit is ON to avoid overflow
         const mul2 = (x) => ((x << 1) & 0xFF) ^ (x & 0x80 ? 0x1B : 0);
         const mul3 = (x) => mul2(x) ^ x;
     
@@ -92,7 +102,7 @@ class AES {
     
         let newState = [];
     
-        for (let c = 0; c < 4; c++) { // Process each column
+        for (let c = 0; c < 4; c++) {
             newState[c] = [
                 mul14(state[0][c]) ^ mul11(state[1][c]) ^ mul13(state[2][c]) ^ mul9(state[3][c]),
                 mul9(state[0][c]) ^ mul14(state[1][c]) ^ mul11(state[2][c]) ^ mul13(state[3][c]),
@@ -107,6 +117,7 @@ class AES {
     addRoundKey(state, roundKey) {
         for (let i = 0; i < 4; i++) {
             for (let j = 0; j < 4; j++) {
+                // accessing the round key in column-wise order
                 state[i][j] ^= roundKey[i + 4 * j];
             }
         }
