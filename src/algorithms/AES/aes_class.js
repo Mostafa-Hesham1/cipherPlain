@@ -76,7 +76,7 @@ class AES {
     mixColumns(state) {
         // masking with 0xFF to ensure the result is a byte
         // xoring with 0x1B if the most significant bit is ON to avoid overflow
-        const mul2 = (x) => ((x << 1) & 0xFF) ^ (x & 0x80 ? 0x1B : 0);
+        const mul2 = (x) => ((x << 1) & 0xFF) ^ (x & (1 << 7) ? 0x1B : 0);
         const mul3 = (x) => mul2(x) ^ x;
     
         let newState = [];
@@ -94,7 +94,7 @@ class AES {
     }
 
     invMixColumns(state) {
-        const mul2 = (x) => ((x << 1) & 0xFF) ^ (x & 0x80 ? 0x1B : 0);
+        const mul2 = (x) => ((x << 1) & 0xFF) ^ (x & (1 << 7) ? 0x1B : 0);
         const mul9 = (x) => mul2(mul2(mul2(x))) ^ x;
         const mul11 = (x) => mul2(mul2(mul2(x)) ^ x) ^ x;
         const mul13 = (x) => mul2(mul2(mul2(x) ^ x)) ^ x;
